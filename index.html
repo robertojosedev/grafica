@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gráfica Express - Impressos Digitais & Off-set</title>
+    <!-- Tailwind CSS & FontAwesome -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Inter', system-ui, -apple-system, sans-serif; 
+            background-color: #f8fafc;
+            color: #0f172a;
+        }
+        .bg-brand-black { background-color: #000000; }
+        .bg-brand-red { background-color: #dc2626; }
+        .text-brand-red { color: #dc2626; }
+        .border-brand-red { border-color: #dc2626; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #dc2626; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #b91c1c; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 antialiased min-h-screen flex flex-col justify-between">
+
+    <!-- BARRA SUPERIOR DA LOJA (HEADER NAVEGAÇÃO) -->
+    <header class="bg-brand-black text-white sticky top-0 z-40 shadow-xl border-b-4 border-red-600">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-4">
+            
+            <!-- ÁREA DA LOGO (ESPAÇO RESERVADO PARA IMAGEM DA SUA LOGO) -->
+            <div class="flex items-center gap-4">
+                <a href="index.html" onclick="showSection('store'); return false;" class="flex items-center gap-3">
+                    <img id="store-logo" src="RB Gráfica png.png" alt="Gráfica Express Logo" class="h-10 w-auto object-contain bg-white/10 p-1 rounded border border-red-600/30" onerror="this.onerror=null; this.outerHTML='<div class=\'bg-red-600 text-white font-black px-3 py-1 rounded text-xl flex items-center gap-2\'><i class=\'fa-solid fa-print\'></i> GRÁFICA <span class=\'text-black bg-white px-1.5 py-0.5 rounded text-sm\'>EXPRESS</span></div>';">
+                </a>
+            </div>
+
+            <!-- BUSCA RÁPIDA DE PRODUTOS NO CATÁLOGO -->
+            <div class="flex-1 max-w-md hidden sm:block">
+                <div class="relative">
+                    <input type="text" id="search-input" onkeyup="filterProducts()" placeholder="Buscar cartões, panfletos, banners..." class="w-full bg-slate-900 text-white placeholder-slate-400 pl-10 pr-4 py-2 rounded-lg border border-slate-700 focus:outline-none focus:border-red-600 text-sm">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-sm"></i>
+                </div>
+            </div>
+
+            <!-- NAVEGAÇÃO E AÇÕES DO USUÁRIO -->
+            <div class="flex items-center gap-3">
+                <span id="user-status-display" class="text-xs text-slate-300 font-semibold hidden md:inline"></span>
+
+                <!-- Carrinho de Compras -->
+                <button onclick="toggleCartModal()" class="relative bg-slate-900 hover:bg-slate-800 text-white px-3 py-2 rounded-lg border border-slate-700 text-sm flex items-center gap-2 transition">
+                    <i class="fa-solid fa-cart-shopping text-red-500"></i>
+                    <span class="hidden sm:inline">Carrinho</span>
+                    <span id="cart-count" class="bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">0</span>
+                </button>
+
+                <!-- Meus Pedidos (Painel do Cliente) -->
+                <button onclick="openCustomerOrders()" class="bg-slate-900 hover:bg-slate-800 text-white px-3 py-2 rounded-lg border border-slate-700 text-sm flex items-center gap-2 transition">
+                    <i class="fa-solid fa-box-open text-red-500"></i>
+                    <span class="hidden sm:inline">Meus Pedidos</span>
+                </button>
+
+                <!-- Botão Entrar Único -->
+                <button id="auth-btn" onclick="openLoginModal()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 shadow-lg shadow-red-600/30 transition">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                    <span>Entrar</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTEÚDO PRINCIPAL DA LOJA DA GRÁFICA -->
+    <main id="store-section" class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            
+            <!-- ESQUERDA: CATEGORIAS E SUBCATEGORIAS -->
+            <aside class="lg:col-span-1 bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                <div class="flex items-center gap-2 pb-3 mb-4 border-b border-slate-200">
+                    <i class="fa-solid fa-layer-group text-red-600 text-lg"></i>
+                    <h2 class="font-black text-slate-900 text-lg uppercase tracking-wide">Categorias</h2>
+                </div>
+                
+                <nav id="category-tree" class="space-y-3">
+                    <!-- Categorias renderizadas via JS -->
+                </nav>
+            </aside>
+
+            <!-- DIREITA: CATÁLOGO DE PRODUTOS DA GRÁFICA -->
+            <section class="lg:col-span-3">
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6 flex justify-between items-center">
+                    <div>
+                        <h1 id="current-category-title" class="font-extrabold text-slate-900 text-xl">Todos os Produtos</h1>
+                        <p class="text-xs text-slate-500">Escolha um produto para ver opções, tiragens e adicionar serviço de arte.</p>
+                    </div>
+                    <span id="product-count-badge" class="bg-red-50 text-red-600 text-xs font-bold px-3 py-1 rounded-full border border-red-100">0 produtos</span>
+                </div>
+
+                <!-- GRID DE PRODUTOS -->
+                <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                    <!-- Carregado via backend ou local API -->
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- DASHBOARD DO VENDEDOR (ADMINISTRADOR) -->
+    <main id="vendor-section" class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full hidden">
+        <div class="bg-brand-black text-white p-6 rounded-xl shadow-2xl border-t-4 border-red-600 mb-6 flex flex-wrap justify-between items-center gap-4">
+            <div>
+                <h1 class="text-2xl font-black flex items-center gap-2">
+                    <i class="fa-solid fa-chart-line text-red-500"></i> Painel do Vendedor
+                </h1>
+                <p class="text-xs text-slate-400">Controle completo de vendas, extensões, funil de conversão e produtos.</p>
+            </div>
+            <button onclick="logoutVendor()" class="bg-red-600 hover:bg-red-700 text-white text-xs px-4 py-2 rounded-lg font-bold transition">
+                <i class="fa-solid fa-right-from-bracket"></i> Sair do Painel
+            </button>
+        </div>
+
+        <!-- ABAS NAVEGÁVEIS DO PAINEL ADMIN -->
+        <div class="flex flex-wrap gap-2 mb-6 border-b border-slate-200 pb-2">
+            <button onclick="switchAdminTab('funnel')" id="tab-btn-funnel" class="admin-tab-btn bg-red-600 text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2">
+                <i class="fa-solid fa-filter text-white"></i> Funil de Vendas
+            </button>
+            <button onclick="switchAdminTab('products')" id="tab-btn-products" class="admin-tab-btn bg-white text-slate-700 border border-slate-200 px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2">
+                <i class="fa-solid fa-box text-red-600"></i> Produtos
+            </button>
+            <button onclick="switchAdminTab('orders')" id="tab-btn-orders" class="admin-tab-btn bg-white text-slate-700 border border-slate-200 px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2">
+                <i class="fa-solid fa-truck-ramp-box text-red-600"></i> Pedidos dos Clientes
+            </button>
+            <button onclick="switchAdminTab('extensions')" id="tab-btn-extensions" class="admin-tab-btn bg-white text-slate-700 border border-slate-200 px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2">
+                <i class="fa-solid fa-plug text-red-600"></i> Extensões (Melhor Envio & Bancos)
+            </button>
+            <button onclick="switchAdminTab('security')" id="tab-btn-security" class="admin-tab-btn bg-white text-slate-700 border border-slate-200 px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2">
+                <i class="fa-solid fa-shield-halved text-red-600"></i> Segurança & WAF
+            </button>
+        </div>
+
+        <!-- ABA: FUNIL DE VENDAS -->
+        <div id="admin-tab-funnel" class="admin-tab-content space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-slate-900">
+                    <span class="text-xs text-slate-500 font-bold uppercase tracking-wider">Acessaram o Site</span>
+                    <h3 id="stat-visits" class="text-3xl font-black text-slate-900 mt-2">0</h3>
+                    <p class="text-xs text-slate-400 mt-1">Visitantes registrados no servidor</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-amber-500">
+                    <span class="text-xs text-amber-600 font-bold uppercase tracking-wider">Adicionaram ao Carrinho</span>
+                    <h3 id="stat-carts" class="text-3xl font-black text-slate-900 mt-2">0</h3>
+                    <p class="text-xs text-slate-400 mt-1">Intenções de compra iniciadas</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-green-600">
+                    <span class="text-xs text-green-600 font-bold uppercase tracking-wider">Compraram</span>
+                    <h3 id="stat-purchases" class="text-3xl font-black text-slate-900 mt-2">0</h3>
+                    <p class="text-xs text-slate-400 mt-1">Compras pagas e confirmadas</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                <h2 class="text-lg font-bold text-slate-900 mb-2 flex items-center gap-2">
+                    <i class="fa-solid fa-paper-plane text-red-600"></i> Disparar Desconto para Carrinhos Abandonados
+                </h2>
+                <p class="text-sm text-slate-600 mb-4">Envie automaticamente um cupom de desconto de 15% via WhatsApp para clientes que colocaram itens no carrinho e não concluíram a compra.</p>
+                <div class="flex flex-wrap gap-4 items-center">
+                    <button onclick="sendCartAbandonmentDiscounts()" class="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 shadow-lg shadow-red-600/20">
+                        <i class="fa-solid fa-tags"></i> Mandar Cupom de 15% Desconto
+                    </button>
+                    <span id="abandoned-status-msg" class="text-xs font-semibold text-slate-500"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ABA: CADASTRO DE PRODUTOS -->
+        <div id="admin-tab-products" class="admin-tab-content hidden space-y-6">
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                <h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-plus-circle text-red-600"></i> Cadastrar Novo Produto
+                </h2>
+                <form id="new-product-form" onsubmit="handleCreateProduct(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Nome do Produto</label>
+                        <input type="text" id="prod-name" required placeholder="Ex: Cartão de Visita Soft Touch" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Categoria / Subcategoria</label>
+                        <select id="prod-category" required class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-sm">
+                            <option value="Cartões de Visita">Cartões de Visita</option>
+                            <option value="Panfletos & Impressos">Panfletos & Impressos</option>
+                            <option value="Banners & Faixas">Banners & Faixas</option>
+                            <option value="Brindes & Canecas">Brindes & Canecas</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Preço Base (R$)</label>
+                        <input type="number" step="0.01" id="prod-price" required placeholder="59.90" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Valor da Criação de Arte (R$)</label>
+                        <input type="number" step="0.01" id="prod-art-price" required placeholder="30.00" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-sm">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-slate-700 mb-1">URL da Imagem</label>
+                        <input type="url" id="prod-image" placeholder="https://exemplo.com/foto-produto.jpg" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-sm">
+                    </div>
+                    <div class="md:col-span-2">
+                        <button type="submit" class="bg-black hover:bg-slate-800 text-white font-bold px-6 py-2.5 rounded-lg text-sm">
+                            Salvar Produto no Servidor
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ABA: PEDIDOS DOS CLIENTES -->
+        <div id="admin-tab-orders" class="admin-tab-content hidden space-y-6">
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                <h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-list-check text-red-600"></i> Pedidos para Produção
+                </h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm text-slate-600">
+                        <thead class="bg-slate-100 text-xs font-bold text-slate-700 uppercase">
+                            <tr>
+                                <th class="p-3">ID Pedido</th>
+                                <th class="p-3">Telefone Cliente</th>
+                                <th class="p-3">Itens</th>
+                                <th class="p-3">Total</th>
+                                <th class="p-3">Endereço de Entrega</th>
+                                <th class="p-3">Status Atual</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-orders-table-body" class="divide-y divide-slate-200">
+                            <!-- Atualizado via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ABA: EXTENSÕES -->
+        <div id="admin-tab-extensions" class="admin-tab-content hidden space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- MELHOR ENVIO -->
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="bg-blue-600 text-white p-3 rounded-lg"><i class="fa-solid fa-truck-fast text-xl"></i></div>
+                        <div>
+                            <h3 class="font-bold text-slate-900">Extensão Melhor Envio</h3>
+                            <p class="text-xs text-slate-500">Cálculo e geração de etiquetas de frete Correios/Jadlog</p>
+                        </div>
+                    </div>
+                    <form onsubmit="saveExtension('melhor_envio', event)" class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700">Token API Melhor Envio</label>
+                            <input type="password" id="me-token-input" value="token_live_melhor_envio_12345" class="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700">CEP de Origem da Gráfica</label>
+                            <input type="text" id="me-cep-input" value="50000-000" class="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs">
+                        </div>
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded text-xs">Salvar Credenciais de Frete</button>
+                    </form>
+                </div>
+
+                <!-- BANCOS & WEBHOOK PIX -->
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="bg-emerald-600 text-white p-3 rounded-lg"><i class="fa-solid fa-building-columns text-xl"></i></div>
+                        <div>
+                            <h3 class="font-bold text-slate-900">Extensão Bancária (PIX Instantâneo)</h3>
+                            <p class="text-xs text-slate-500">Detecção automática de pagamentos no checkout</p>
+                        </div>
+                    </div>
+                    <form onsubmit="saveExtension('banco', event)" class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700">Banco de Integração</label>
+                            <select id="bank-name-input" class="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs">
+                                <option value="Banco do Brasil">Banco do Brasil API Pix</option>
+                                <option value="Itaú">Itaú Empresas</option>
+                                <option value="Mercado Pago">Mercado Pago Instantâneo</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700">Chave PIX Oficial</label>
+                            <input type="text" id="bank-pix-input" value="financeiro@graficaexpress.com.br" class="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs">
+                        </div>
+                        <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded text-xs">Salvar Integração Bancária</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- ABA: SEGURANÇA & WAF -->
+        <div id="admin-tab-security" class="admin-tab-content hidden space-y-6">
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                <h2 class="text-lg font-bold text-slate-900 mb-2 flex items-center gap-2">
+                    <i class="fa-solid fa-shield-halved text-red-600"></i> Status da Camada de Segurança WAF
+                </h2>
+                <p class="text-xs text-slate-500 mb-4">O sistema limpa entradas maliciosas e previne requisições em massa no login.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                        <span class="text-xs font-bold text-green-700 uppercase bg-green-100 px-2 py-0.5 rounded">Ativo</span>
+                        <h4 class="font-bold text-sm text-slate-900 mt-2">Proteção Contra Injeção / Anti-XSS</h4>
+                        <p class="text-xs text-slate-500 mt-1">Caracteres especiais são higienizados na rota `server.js`.</p>
+                    </div>
+                    <div class="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                        <span class="text-xs font-bold text-green-700 uppercase bg-green-100 px-2 py-0.5 rounded">Ativo</span>
+                        <h4 class="font-bold text-sm text-slate-900 mt-2">Rate Limiting de IPs</h4>
+                        <p class="text-xs text-slate-500 mt-1">Máximo 120 requisições/minuto por cliente.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- PAINEL DO CLIENTE (MEUS PEDIDOS) -->
+    <main id="customer-orders-section" class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full hidden">
+        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h1 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-box-open text-red-600"></i> Meus Pedidos
+                    </h1>
+                    <p class="text-xs text-slate-500">Acompanhe o andamento dos seus trabalhos impressos.</p>
+                </div>
+                <button onclick="showSection('store')" class="bg-black text-white px-4 py-2 rounded-lg text-xs font-bold">
+                    Voltar para a Loja
+                </button>
+            </div>
+            
+            <div id="customer-orders-container" class="space-y-4">
+                <!-- Pedidos do cliente -->
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL DETALHES DO PRODUTO & ARTE DA CRIAÇÃO -->
+    <div id="product-detail-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white max-w-lg w-full rounded-xl shadow-2xl overflow-hidden border border-slate-200">
+            <div class="bg-slate-900 text-white p-4 flex justify-between items-center border-b-2 border-red-600">
+                <h3 id="modal-prod-title" class="font-bold text-base flex items-center gap-2">Detalhes do Produto</h3>
+                <button onclick="closeProductModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <div class="p-6 space-y-4">
+                <div class="flex gap-4 items-center">
+                    <img id="modal-prod-img" src="" alt="Produto" class="w-24 h-24 object-cover rounded-lg border border-slate-200">
+                    <div>
+                        <span id="modal-prod-cat" class="text-[10px] font-bold uppercase text-red-600 bg-red-50 px-2 py-0.5 rounded">Categoria</span>
+                        <h4 id="modal-prod-name" class="font-black text-slate-900 text-lg leading-tight mt-1">Nome do Produto</h4>
+                        <div id="modal-prod-base-price" class="text-lg font-extrabold text-slate-900 mt-1">R$ 0,00</div>
+                    </div>
+                </div>
+
+                <!-- VARIAÇÕES DE QUANTIDADE / PAPEL -->
+                <div class="space-y-3 pt-3 border-t border-slate-100">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Quantidade / Tiragem</label>
+                        <select id="modal-var-quantity" onchange="updateModalTotalPrice()" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-xs font-bold">
+                            <option value="1">100 unidades (Valor Base)</option>
+                            <option value="2.5">500 unidades (+150%)</option>
+                            <option value="4">1.000 unidades (+300%)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Acabamento</label>
+                        <select id="modal-var-finish" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-xs">
+                            <option value="Refile Padrão (Cantos Retos)">Refile Padrão (Cantos Retos)</option>
+                            <option value="Canto Arredondado">Canto Arredondado</option>
+                            <option value="Verniz Localizado Frente">Verniz Localizado Frente</option>
+                        </select>
+                    </div>
+
+                    <!-- CRIAÇÃO DE ARTE CHECKBOX -->
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-3 mt-2">
+                        <input type="checkbox" id="modal-art-checkbox" onchange="updateModalTotalPrice()" class="w-4 h-4 text-red-600 rounded border-slate-300 mt-0.5">
+                        <label for="modal-art-checkbox" class="text-xs text-slate-800 cursor-pointer">
+                            <span class="font-bold text-red-700 block">Adicionar Serviço de Criação de Arte</span>
+                            Desejo que a equipe crie a arte final deste impresso (+ R$ <span id="modal-art-price-display">0.00</span>).
+                        </label>
+                    </div>
+                </div>
+
+                <div class="pt-3 border-t border-slate-200 flex items-center justify-between">
+                    <div>
+                        <span class="text-[10px] text-slate-500 font-bold uppercase">Total Item:</span>
+                        <div id="modal-calculated-total" class="text-xl font-black text-red-600">R$ 0,00</div>
+                    </div>
+                    <button onclick="confirmAddToCartFromModal()" class="bg-red-600 hover:bg-red-700 text-white font-bold px-6 py-2.5 rounded-lg text-xs shadow-lg shadow-red-600/30 flex items-center gap-2">
+                        <i class="fa-solid fa-cart-plus"></i> Adicionar ao Carrinho
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL UNIFICADO: LOGIN E CRIAÇÃO DE CONTA COM OTP WHATSAPP -->
+    <div id="login-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white max-w-sm w-full rounded-xl shadow-2xl overflow-hidden border border-slate-200">
+            
+            <!-- ABAS DO MODAL: ENTRAR / CRIAR CONTA -->
+            <div class="flex border-b border-slate-200 bg-slate-100">
+                <button id="auth-tab-login" type="button" onclick="switchAuthMode('login')" class="flex-1 py-3 font-bold text-xs text-red-600 border-b-2 border-red-600 bg-white">
+                    Entrar na Conta
+                </button>
+                <button id="auth-tab-register" type="button" onclick="switchAuthMode('register')" class="flex-1 py-3 font-bold text-xs text-slate-500 hover:text-slate-800">
+                    Criar Conta (WhatsApp)
+                </button>
+            </div>
+
+            <div class="p-6">
+                <!-- FORMULÁRIO 1: LOGIN -->
+                <form id="form-auth-login" onsubmit="handleUnifiedLogin(event)" class="space-y-4">
+                    <h3 class="font-black text-slate-900 text-base flex items-center gap-2">
+                        <i class="fa-solid fa-user-lock text-red-600"></i> Acesse Sua Conta
+                    </h3>
+                    <p class="text-xs text-slate-500">Digite seu telefone de cliente ou o e-mail do vendedor.</p>
+                    
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">E-mail ou Telefone</label>
+                        <input type="text" id="login-identifier-input" required placeholder="Telefone ou e-mail de acesso" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm focus:outline-none focus:border-red-600">
+                    </div>
+
+                    <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 rounded-lg text-sm shadow-lg shadow-red-600/20">
+                        Entrar
+                    </button>
+                </form>
+
+                <!-- FORMULÁRIO 2: CRIAR CONTA (WHATSAPP) -->
+                <form id="form-auth-register" onsubmit="handleSendWhatsAppCode(event)" class="space-y-4 hidden">
+                    <h3 class="font-black text-slate-900 text-base flex items-center gap-2">
+                        <i class="fa-brands fa-whatsapp text-emerald-600 text-lg"></i> Criar Conta com WhatsApp
+                    </h3>
+                    <p class="text-xs text-slate-500">Informe seu número para enviarmos um código de verificação de 6 dígitos.</p>
+                    
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Seu Número de WhatsApp</label>
+                        <input type="tel" id="register-phone-input" required placeholder="(00) 99999-9999" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm focus:outline-none focus:border-emerald-600">
+                    </div>
+
+                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg text-sm shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-paper-plane"></i> Enviar Código no WhatsApp
+                    </button>
+                </form>
+
+                <!-- FORMULÁRIO 3: VERIFICAÇÃO DO CÓDIGO -->
+                <form id="form-auth-verify" onsubmit="handleVerifyWhatsAppCode(event)" class="space-y-4 hidden">
+                    <h3 class="font-black text-slate-900 text-base flex items-center gap-2">
+                        <i class="fa-solid fa-key text-red-600"></i> Digite o Código Recebido
+                    </h3>
+                    <p class="text-xs text-slate-500">Enviamos um código de 6 dígitos para o WhatsApp <span id="display-verify-phone" class="font-bold text-slate-800"></span>.</p>
+                    
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Código de 6 Dígitos</label>
+                        <input type="text" id="verify-code-input" maxlength="6" required placeholder="Ex: 8A3F9X" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-center font-mono text-lg font-bold uppercase tracking-widest text-slate-900 focus:outline-none focus:border-red-600">
+                    </div>
+
+                    <div id="simulated-code-box" class="bg-amber-50 border border-amber-200 text-amber-800 text-[11px] p-2 rounded text-center font-mono"></div>
+
+                    <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 rounded-lg text-sm shadow-lg shadow-red-600/20">
+                        Confirmar e Criar Conta
+                    </button>
+                </form>
+
+                <button type="button" onclick="closeLoginModal()" class="w-full mt-3 text-xs text-slate-400 hover:text-slate-600 text-center block">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: CARRINHO E CHECKOUT -->
+    <div id="cart-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white max-w-lg w-full rounded-xl shadow-2xl overflow-hidden border border-slate-200 max-h-[90vh] flex flex-col">
+            <div class="bg-slate-900 text-white p-4 flex justify-between items-center border-b-2 border-red-600">
+                <h3 class="font-bold text-base flex items-center gap-2"><i class="fa-solid fa-cart-shopping text-red-500"></i> Seu Carrinho</h3>
+                <button onclick="toggleCartModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <div id="cart-items-container" class="p-4 flex-1 overflow-y-auto divide-y divide-slate-100">
+                <!-- Itens inseridos via JS -->
+            </div>
+
+            <div class="p-4 bg-slate-50 border-t border-slate-200 space-y-3">
+                <div class="flex justify-between items-center font-black text-slate-900">
+                    <span>Total da Compra:</span>
+                    <span id="cart-total-display" class="text-lg text-red-600">R$ 0,00</span>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Endereço de Entrega</label>
+                    <input type="text" id="checkout-address" placeholder="Rua, número, bairro e CEP" class="w-full bg-white border border-slate-300 rounded p-2 text-xs">
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" id="save-address-checkbox" checked class="w-4 h-4 text-red-600 rounded border-slate-300">
+                    <label for="save-address-checkbox" class="text-xs text-slate-700 font-semibold">Salvar este endereço padrão para os próximos envios</label>
+                </div>
+
+                <button onclick="processCheckout()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg text-sm shadow-lg shadow-red-600/30">
+                    Finalizar Pedido e Pagar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT FRONTEND -->
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+
+        const CATEGORIES = [
+            { name: "Cartões de Visita", subs: ["Couche 300g", "PVC Transparente", "Verniz Localizado"] },
+            { name: "Panfletos & Impressos", subs: ["Panfleto 10x14cm", "Folder 2 Dobras", "Receituários"] },
+            { name: "Banners & Faixas", subs: ["Banner 440g Ilhós", "Faixa de Lona", "Adesivo Vinil"] },
+            { name: "Brindes & Canecas", subs: ["Caneca Porcelana", "Caneta Personalizada", "Chaveiro Metal"] }
+        ];
+
+        let state = {
+            products: [],
+            cart: JSON.parse(localStorage.getItem('grafica_cart')) || [],
+            customerPhone: localStorage.getItem('grafica_customer_phone') || null,
+            customerAddress: localStorage.getItem('grafica_customer_address') || "",
+            vendorLoggedIn: sessionStorage.getItem('grafica_vendor_login') === 'true',
+            selectedCategory: 'Todos'
+        };
+
+        let selectedProductForModal = null;
+        let isInitialized = false;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (isInitialized) return;
+            isInitialized = true;
+            
+            renderCategoryTree();
+            fetchProducts();
+            renderCartCount();
+            renderStoreUserStatus();
+            trackMetric('visit');
+        });
+
+        // 1. CARREGAR PRODUTOS DO BACKEND
+        async function fetchProducts() {
+            try {
+                const res = await fetch(`${API_URL}/produtos`);
+                if (res.ok) {
+                    state.products = await res.json();
+                } else {
+                    useFallbackProducts();
+                }
+            } catch (err) {
+                useFallbackProducts();
+            }
+            renderProducts();
+        }
+
+        function useFallbackProducts() {
+            state.products = [
+                { id: 1, name: "Cartão de Visita Premium", category: "Cartões de Visita", subcategory: "Couche 300g", price: 55.00, art_price: 25.00, image: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=400" },
+                { id: 2, name: "Panfleto Promocional 10x14", category: "Panfletos & Impressos", subcategory: "Panfleto 10x14cm", price: 120.00, art_price: 40.00, image: "https://images.unsplash.com/photo-1562577309-4932fdd64cd1?w=400" },
+                { id: 3, name: "Banner Comercial em Lona", category: "Banners & Faixas", subcategory: "Banner 440g Ilhós", price: 85.00, art_price: 30.00, image: "https://images.unsplash.com/photo-1626785774573-4b799315345d?w=400" },
+                { id: 4, name: "Caneca Personalizada", category: "Brindes & Canecas", subcategory: "Caneca Porcelana", price: 35.00, art_price: 15.00, image: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=400" }
+            ];
+        }
+
+        // 2. FUNIL DE VENDAS
+        async function trackMetric(type) {
+            try {
+                await fetch(`${API_URL}/metrics/track`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type })
+                });
+            } catch (e) {}
+        }
+
+        // 3. NAVEGAÇÃO DE CATEGORIAS
+        function renderCategoryTree() {
+            const container = document.getElementById('category-tree');
+            let html = `
+                <button type="button" onclick="filterCategory('Todos')" class="w-full text-left font-bold text-xs p-2 rounded hover:bg-slate-100 flex justify-between items-center ${state.selectedCategory === 'Todos' ? 'text-red-600 bg-red-50' : 'text-slate-700'}">
+                    <span>Todos os Produtos</span>
+                    <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                </button>
+            `;
+
+            CATEGORIES.forEach(cat => {
+                html += `
+                    <div class="space-y-1">
+                        <button type="button" onclick="filterCategory('${cat.name}')" class="w-full text-left font-bold text-xs p-2 rounded hover:bg-slate-100 flex justify-between items-center ${state.selectedCategory === cat.name ? 'text-red-600 bg-red-50' : 'text-slate-800'}">
+                            <span>${cat.name}</span>
+                            <i class="fa-solid fa-folder text-red-500 text-xs"></i>
+                        </button>
+                        <div class="pl-4 space-y-1">
+                            ${cat.subs.map(sub => `
+                                <button type="button" onclick="filterCategory('${cat.name}', '${sub}')" class="w-full text-left text-xs text-slate-500 hover:text-red-600 p-1 flex items-center gap-1">
+                                    <span class="text-slate-300">•</span> ${sub}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function filterCategory(cat, sub = null) {
+            state.selectedCategory = cat;
+            document.getElementById('current-category-title').innerText = sub ? `${cat} > ${sub}` : cat;
+            renderProducts(cat, sub);
+        }
+
+        // 4. RENDEREIZAÇÃO DOS PRODUTOS
+        function renderProducts(catFilter = 'Todos', subFilter = null) {
+            const grid = document.getElementById('product-grid');
+            let filtered = state.products;
+
+            if (catFilter !== 'Todos') {
+                filtered = filtered.filter(p => p.category === catFilter);
+                if (subFilter) filtered = filtered.filter(p => p.subcategory === subFilter);
+            }
+
+            document.getElementById('product-count-badge').innerText = `${filtered.length} produtos`;
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-12 text-center text-slate-400 text-xs font-semibold">Nenhum produto cadastrado nesta categoria.</div>`;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(product => `
+                <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition flex flex-col justify-between">
+                    <div>
+                        <img src="${product.image}" alt="${product.name}" class="w-full h-44 object-cover">
+                        <div class="p-4 space-y-2">
+                            <span class="text-[10px] font-bold uppercase text-red-600 bg-red-50 px-2 py-0.5 rounded">${product.category}</span>
+                            <h3 class="font-bold text-slate-900 text-base leading-snug">${product.name}</h3>
+                            <p class="text-xs text-slate-500">Criação de Arte: + R$ ${parseFloat(product.art_price || product.artPrice || 0).toFixed(2)}</p>
+                            <div class="text-lg font-black text-slate-900 pt-1">R$ ${parseFloat(product.price).toFixed(2)}</div>
+                        </div>
+                    </div>
+                    <div class="p-4 pt-0">
+                        <button type="button" onclick="openProductModal(${product.id})" class="w-full bg-slate-900 hover:bg-red-600 text-white font-bold py-2.5 rounded-lg text-xs transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-sliders"></i> Opções & Adicionar
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 5. MODAL DE ARTE E VARIAÇÕES
+        function openProductModal(prodId) {
+            selectedProductForModal = state.products.find(p => p.id === prodId);
+            if (!selectedProductForModal) return;
+
+            const artPrice = parseFloat(selectedProductForModal.art_price || selectedProductForModal.artPrice || 0);
+
+            document.getElementById('modal-prod-title').innerText = selectedProductForModal.name;
+            document.getElementById('modal-prod-name').innerText = selectedProductForModal.name;
+            document.getElementById('modal-prod-cat').innerText = selectedProductForModal.category;
+            document.getElementById('modal-prod-base-price').innerText = `R$ ${parseFloat(selectedProductForModal.price).toFixed(2)}`;
+            document.getElementById('modal-prod-img').src = selectedProductForModal.image;
+            document.getElementById('modal-art-price-display').innerText = artPrice.toFixed(2);
+            document.getElementById('modal-art-checkbox').checked = false;
+
+            updateModalTotalPrice();
+            document.getElementById('product-detail-modal').classList.remove('hidden');
+        }
+
+        function closeProductModal() {
+            document.getElementById('product-detail-modal').classList.add('hidden');
+        }
+
+        function updateModalTotalPrice() {
+            if (!selectedProductForModal) return;
+            const mult = parseFloat(document.getElementById('modal-var-quantity').value) || 1;
+            const hasArt = document.getElementById('modal-art-checkbox').checked;
+            const artPrice = parseFloat(selectedProductForModal.art_price || selectedProductForModal.artPrice || 0);
+            
+            let total = parseFloat(selectedProductForModal.price) * mult;
+            if (hasArt) total += artPrice;
+
+            document.getElementById('modal-calculated-total').innerText = `R$ ${total.toFixed(2)}`;
+        }
+
+        function confirmAddToCartFromModal() {
+            if (!selectedProductForModal) return;
+
+            const mult = parseFloat(document.getElementById('modal-var-quantity').value) || 1;
+            const hasArt = document.getElementById('modal-art-checkbox').checked;
+            const finish = document.getElementById('modal-var-finish').value;
+            const artPrice = parseFloat(selectedProductForModal.art_price || selectedProductForModal.artPrice || 0);
+
+            let finalPrice = parseFloat(selectedProductForModal.price) * mult;
+            if (hasArt) finalPrice += artPrice;
+
+            const item = {
+                id: Date.now(),
+                name: selectedProductForModal.name,
+                price: finalPrice,
+                hasArt: hasArt,
+                finish: finish
+            };
+
+            state.cart.push(item);
+            localStorage.setItem('grafica_cart', JSON.stringify(state.cart));
+            renderCartCount();
+            trackMetric('cart');
+
+            closeProductModal();
+            toggleCartModal();
+        }
+
+        // 6. CARRINHO E CHECKOUT
+        function renderCartCount() {
+            document.getElementById('cart-count').innerText = state.cart.length;
+        }
+
+        function toggleCartModal() {
+            const modal = document.getElementById('cart-modal');
+            modal.classList.toggle('hidden');
+            if (!modal.classList.contains('hidden')) renderCartItems();
+        }
+
+        function renderCartItems() {
+            const container = document.getElementById('cart-items-container');
+            if (state.cart.length === 0) {
+                container.innerHTML = `<div class="py-8 text-center text-slate-400 text-xs">Seu carrinho está vazio.</div>`;
+                document.getElementById('cart-total-display').innerText = 'R$ 0,00';
+                return;
+            }
+
+            let total = 0;
+            container.innerHTML = state.cart.map((item, index) => {
+                total += item.price;
+                return `
+                    <div class="py-3 flex justify-between items-center gap-2">
+                        <div>
+                            <h4 class="font-bold text-xs text-slate-900">${item.name}</h4>
+                            <p class="text-[10px] text-slate-500">${item.finish} ${item.hasArt ? '| + Criação de Arte' : ''}</p>
+                            <span class="text-xs font-bold text-red-600">R$ ${item.price.toFixed(2)}</span>
+                        </div>
+                        <button type="button" onclick="removeFromCart(${index})" class="text-red-500 hover:text-red-700 text-xs p-1"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('cart-total-display').innerText = `R$ ${total.toFixed(2)}`;
+            if (state.customerAddress) {
+                document.getElementById('checkout-address').value = state.customerAddress;
+            }
+        }
+
+        function removeFromCart(index) {
+            state.cart.splice(index, 1);
+            localStorage.setItem('grafica_cart', JSON.stringify(state.cart));
+            renderCartCount();
+            renderCartItems();
+        }
+
+        async function processCheckout() {
+            if (!state.customerPhone) {
+                toggleCartModal();
+                return openLoginModal();
+            }
+
+            if (state.cart.length === 0) return alert("Seu carrinho está vazio!");
+
+            const address = document.getElementById('checkout-address').value.trim();
+            if (!address) return alert("Por favor, informe o endereço de entrega.");
+
+            const saveAddress = document.getElementById('save-address-checkbox').checked;
+            const total = state.cart.reduce((acc, item) => acc + item.price, 0);
+
+            try {
+                const res = await fetch(`${API_URL}/pedidos`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        phone: state.customerPhone,
+                        items: state.cart,
+                        total: total,
+                        address: address,
+                        save_address: saveAddress
+                    })
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    if (saveAddress) {
+                        state.customerAddress = address;
+                        localStorage.setItem('grafica_customer_address', address);
+                    }
+
+                    alert(`Pedido realizado com sucesso! Número do Pedido: ${data.orderId}`);
+                    state.cart = [];
+                    localStorage.removeItem('grafica_cart');
+                    renderCartCount();
+                    toggleCartModal();
+                    openCustomerOrders();
+                } else {
+                    alert(data.error || "Erro ao processar pedido.");
+                }
+            } catch (err) {
+                alert("Erro ao enviar pedido para o servidor.");
+            }
+        }
+
+        // 7. AUTENTICAÇÃO E LOGIN
+        function openLoginModal() { document.getElementById('login-modal').classList.remove('hidden'); }
+        function closeLoginModal() { document.getElementById('login-modal').classList.add('hidden'); }
+
+        function switchAuthMode(mode) {
+            const tabLogin = document.getElementById('auth-tab-login');
+            const tabRegister = document.getElementById('auth-tab-register');
+            const formLogin = document.getElementById('form-auth-login');
+            const formRegister = document.getElementById('form-auth-register');
+            const formVerify = document.getElementById('form-auth-verify');
+
+            formVerify.classList.add('hidden');
+
+            if (mode === 'login') {
+                tabLogin.className = 'flex-1 py-3 font-bold text-xs text-red-600 border-b-2 border-red-600 bg-white';
+                tabRegister.className = 'flex-1 py-3 font-bold text-xs text-slate-500 hover:text-slate-800';
+                formLogin.classList.remove('hidden');
+                formRegister.classList.add('hidden');
+            } else {
+                tabRegister.className = 'flex-1 py-3 font-bold text-xs text-emerald-600 border-b-2 border-emerald-600 bg-white';
+                tabLogin.className = 'flex-1 py-3 font-bold text-xs text-slate-500 hover:text-slate-800';
+                formRegister.classList.remove('hidden');
+                formLogin.classList.add('hidden');
+            }
+        }
+
+        async function handleUnifiedLogin(e) {
+            e.preventDefault();
+            const identifier = document.getElementById('login-identifier-input').value.trim();
+
+            try {
+                const res = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ identifier })
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    if (data.role === 'vendor') {
+                        state.vendorLoggedIn = true;
+                        sessionStorage.setItem('grafica_vendor_login', 'true');
+                        closeLoginModal();
+                        showSection('vendor');
+                        loadAdminData();
+                    } else if (data.role === 'customer') {
+                        state.customerPhone = identifier;
+                        if (data.client && data.client.default_address) {
+                            state.customerAddress = data.client.default_address;
+                            localStorage.setItem('grafica_customer_address', data.client.default_address);
+                        }
+                        localStorage.setItem('grafica_customer_phone', identifier);
+                        renderStoreUserStatus();
+                        closeLoginModal();
+                    }
+                } else {
+                    alert(data.error || "Acesso negado.");
+                }
+            } catch (err) {
+                if (identifier.toLowerCase() === 'admin@grafica.com') {
+                    state.vendorLoggedIn = true;
+                    sessionStorage.setItem('grafica_vendor_login', 'true');
+                    closeLoginModal();
+                    showSection('vendor');
+                } else {
+                    state.customerPhone = identifier;
+                    localStorage.setItem('grafica_customer_phone', identifier);
+                    renderStoreUserStatus();
+                    closeLoginModal();
+                }
+            }
+        }
+
+        let pendingRegisterPhone = '';
+
+        async function handleSendWhatsAppCode(e) {
+            e.preventDefault();
+            const phone = document.getElementById('register-phone-input').value.trim();
+            if (phone.length < 8) return alert("Digite um telefone WhatsApp válido com DDD.");
+
+            try {
+                const res = await fetch(`${API_URL}/auth/send-otp`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    pendingRegisterPhone = phone;
+                    document.getElementById('display-verify-phone').innerText = phone;
+                    document.getElementById('simulated-code-box').innerText = `[PROTÓTIPO] Código enviado ao WhatsApp: ${data.simulatedCode}`;
+                    
+                    document.getElementById('form-auth-register').classList.add('hidden');
+                    document.getElementById('form-auth-verify').classList.remove('hidden');
+                } else {
+                    alert(data.error || "Erro ao enviar código.");
+                }
+            } catch (err) {
+                alert("Erro ao conectar ao servidor para envio de código.");
+            }
+        }
+
+        async function handleVerifyWhatsAppCode(e) {
+            e.preventDefault();
+            const code = document.getElementById('verify-code-input').value.trim();
+
+            try {
+                const res = await fetch(`${API_URL}/auth/verify-otp`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone: pendingRegisterPhone, code })
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    state.customerPhone = pendingRegisterPhone;
+                    localStorage.setItem('grafica_customer_phone', pendingRegisterPhone);
+                    renderStoreUserStatus();
+                    closeLoginModal();
+                    alert("Conta criada com sucesso! Você já está conectado.");
+                } else {
+                    alert(data.error || "Código incorreto.");
+                }
+            } catch (err) {
+                alert("Erro ao verificar código.");
+            }
+        }
+
+        function renderStoreUserStatus() {
+            const btn = document.getElementById('auth-btn');
+            const display = document.getElementById('user-status-display');
+
+            if (state.customerPhone) {
+                display.innerText = `Tel: ${state.customerPhone}`;
+                btn.innerHTML = `<i class="fa-solid fa-right-from-bracket"></i> <span>Sair</span>`;
+                btn.onclick = () => {
+                    state.customerPhone = null;
+                    localStorage.removeItem('grafica_customer_phone');
+                    renderStoreUserStatus();
+                };
+            } else {
+                display.innerText = "";
+                btn.innerHTML = `<i class="fa-solid fa-right-to-bracket"></i> <span>Entrar</span>`;
+                btn.onclick = openLoginModal;
+            }
+        }
+
+        function logoutVendor() {
+            state.vendorLoggedIn = false;
+            sessionStorage.removeItem('grafica_vendor_login');
+            showSection('store');
+        }
+
+        // 8. PAINEL CLIENTE & ADMIN DASHBOARD
+        function showSection(sec) {
+            document.getElementById('store-section').classList.add('hidden');
+            document.getElementById('vendor-section').classList.add('hidden');
+            document.getElementById('customer-orders-section').classList.add('hidden');
+            document.getElementById(`${sec}-section`).classList.remove('hidden');
+        }
+
+        async function openCustomerOrders() {
+            if (!state.customerPhone) return openLoginModal();
+            showSection('customer-orders');
+            
+            const container = document.getElementById('customer-orders-container');
+            try {
+                const res = await fetch(`${API_URL}/pedidos/cliente/${state.customerPhone}`);
+                const orders = await res.json();
+
+                if (orders.length === 0) {
+                    container.innerHTML = `<div class="py-8 text-center text-slate-400 text-xs">Você não possui pedidos ativos.</div>`;
+                    return;
+                }
+
+                container.innerHTML = orders.map(o => `
+                    <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="font-black text-slate-900">${o.id}</span>
+                            <span class="bg-red-100 text-red-700 font-bold px-2 py-0.5 rounded">${o.status}</span>
+                        </div>
+                        <div class="text-xs text-slate-600">
+                            ${(typeof o.items === 'string' ? JSON.parse(o.items) : o.items).map(i => `${i.name} (R$ ${i.price.toFixed(2)})`).join(', ')}
+                        </div>
+                        <div class="flex justify-between items-center text-xs pt-2 border-t border-slate-200">
+                            <span class="text-slate-400">${new Date(o.created_at || Date.now()).toLocaleDateString('pt-BR')}</span>
+                            <span class="font-bold text-slate-900">Total: R$ ${parseFloat(o.total).toFixed(2)}</span>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                container.innerHTML = `<div class="py-4 text-xs text-slate-500">Erro ao buscar pedidos no servidor.</div>`;
+            }
+        }
+
+        async function loadAdminData() {
+            try {
+                const res = await fetch(`${API_URL}/metrics`);
+                const m = await res.json();
+                document.getElementById('stat-visits').innerText = m.visits || 0;
+                document.getElementById('stat-carts').innerText = m.carts || 0;
+                document.getElementById('stat-purchases').innerText = m.purchases || 0;
+            } catch (e) {}
+
+            try {
+                const resOrders = await fetch(`${API_URL}/pedidos/admin`);
+                const orders = await resOrders.json();
+                const tbody = document.getElementById('admin-orders-table-body');
+
+                tbody.innerHTML = orders.map(o => `
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-3 font-bold text-xs text-slate-900">${o.id}</td>
+                        <td class="p-3 text-xs">${o.phone}</td>
+                        <td class="p-3 text-xs">${(typeof o.items === 'string' ? JSON.parse(o.items) : o.items).length} itens</td>
+                        <td class="p-3 text-xs font-bold text-red-600">R$ ${parseFloat(o.total).toFixed(2)}</td>
+                        <td class="p-3 text-xs">${o.address}</td>
+                        <td class="p-3 text-xs"><span class="bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded">${o.status}</span></td>
+                    </tr>
+                `).join('');
+            } catch (e) {}
+        }
+
+        function switchAdminTab(tab) {
+            document.querySelectorAll('.admin-tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.admin-tab-btn').forEach(el => {
+                el.classList.remove('bg-red-600', 'text-white');
+                el.classList.add('bg-white', 'text-slate-700');
+            });
+
+            document.getElementById(`admin-tab-${tab}`).classList.remove('hidden');
+            const btn = document.getElementById(`tab-btn-${tab}`);
+            btn.classList.remove('bg-white', 'text-slate-700');
+            btn.classList.add('bg-red-600', 'text-white');
+        }
+
+        async function handleCreateProduct(e) {
+            e.preventDefault();
+            const productData = {
+                name: document.getElementById('prod-name').value,
+                category: document.getElementById('prod-category').value,
+                subcategory: document.getElementById('prod-category').value,
+                price: parseFloat(document.getElementById('prod-price').value),
+                art_price: parseFloat(document.getElementById('prod-art-price').value),
+                image: document.getElementById('prod-image').value
+            };
+
+            try {
+                const res = await fetch(`${API_URL}/produtos`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(productData)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert("Produto cadastrado com sucesso!");
+                    e.target.reset();
+                    await fetchProducts();
+                }
+            } catch (err) {
+                alert("Erro ao cadastrar produto.");
+            }
+        }
+
+        async function saveExtension(key, e) {
+            e.preventDefault();
+            const value = key === 'melhor_envio' ? {
+                token: document.getElementById('me-token-input').value,
+                cep: document.getElementById('me-cep-input').value
+            } : {
+                bank: document.getElementById('bank-name-input').value,
+                pix: document.getElementById('bank-pix-input').value
+            };
+
+            try {
+                await fetch(`${API_URL}/extensions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ key, value })
+                });
+                alert("Configurações salvas!");
+            } catch (err) {
+                alert("Erro ao salvar extensão.");
+            }
+        }
+
+        function sendCartAbandonmentDiscounts() {
+            const msg = document.getElementById('abandoned-status-msg');
+            msg.innerText = "Disparando cupom GRAFICA15 via WhatsApp...";
+            setTimeout(() => { msg.innerText = "Cupons enviados aos carrinhos pendentes!"; }, 1500);
+        }
+
+        function filterProducts() {
+            const q = document.getElementById('search-input').value.toLowerCase();
+            const filtered = state.products.filter(p => p.name.toLowerCase().includes(q));
+            const grid = document.getElementById('product-grid');
+
+            grid.innerHTML = filtered.map(product => `
+                <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition flex flex-col justify-between">
+                    <div>
+                        <img src="${product.image}" alt="${product.name}" class="w-full h-44 object-cover">
+                        <div class="p-4 space-y-2">
+                            <span class="text-[10px] font-bold uppercase text-red-600 bg-red-50 px-2 py-0.5 rounded">${product.category}</span>
+                            <h3 class="font-bold text-slate-900 text-base leading-snug">${product.name}</h3>
+                            <p class="text-xs text-slate-500">Criação de Arte: + R$ ${parseFloat(product.art_price || 0).toFixed(2)}</p>
+                            <div class="text-lg font-black text-slate-900 pt-1">R$ ${parseFloat(product.price).toFixed(2)}</div>
+                        </div>
+                    </div>
+                    <div class="p-4 pt-0">
+                        <button type="button" onclick="openProductModal(${product.id})" class="w-full bg-slate-900 hover:bg-red-600 text-white font-bold py-2.5 rounded-lg text-xs transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-sliders"></i> Opções & Adicionar
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
+</html>
